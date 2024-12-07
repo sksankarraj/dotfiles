@@ -13,7 +13,7 @@ return {
 		},
 		config = function()
 			require("mason-lspconfig").setup({
-				ensure_installed = { "lua_ls", "tsserver", "snyk_ls" },
+				ensure_installed = { "lua_ls", "ts_ls", "snyk_ls", "pyright", "terraformls" },
 			})
 		end,
 	},
@@ -22,13 +22,26 @@ return {
 		config = function()
 			local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
+
 			local lspconfig = require("lspconfig")
 			lspconfig.lua_ls.setup({
 				capabilities = capabilities,
 			})
-			lspconfig.tsserver.setup({
+			lspconfig.ts_ls.setup({
 				capabilities = capabilities,
 			})
+      lspconfig.terraformls.setup({
+        capabilities = capabilities,
+      })
+      lspconfig.pyright.setup({
+        capabilities = capabilities,
+        on_new_config = function(config, root_dir)
+          local env = vim.trim(vim.fn.system('cd "' .. root_dir .. '"; poetry env info -p 2>/dev/null'))
+          if string.len(env) > 0 then
+            config.settings.python.pythonPath = env .. '/bin/python'
+          end
+        end,
+      })
 			lspconfig.snyk_ls.setup({
 				cmd = { "/usr/local/bin/snyk-ls" },
 				root_dir = function(name)
@@ -36,8 +49,8 @@ return {
 				end,
 				init_options = {
 					activateSnykCode = "true",
-					enableTrustedFoldersFeature = "false", -- Disable folder trust
 					enableTelemetry = "false",
+          activateSnykIaC = "false",
 					token = os.getenv("SNYK_TOKEN"),
 					filterSeverity = {
 						critical = true,
@@ -45,10 +58,12 @@ return {
 						medium = true,
 						low = false,
 					},
-					organization = "",
+					organization = "ps-flow",
 					enableSnykOpenBrowserActions = "false",
-					activateSnykCodeSecurity = "true",
-					activateSnykCodeQuality = "true",
+          enableTrustedFoldersFeature = "true", -- Whether LS will prompt to trust a folder (default: true)
+          activateSnykCodeSecurity = "false", -- Enables Snyk Code Security reporting
+          activateSnykCodeQuality = "false", -- Enable Snyk Code Quality issue reporting (Beta, only in IDEs and LS)
+          scanningMode = "manual", -- Specifies the mode for scans: "auto" for background scans or "manual" for scans on command
 				},
 			})
 

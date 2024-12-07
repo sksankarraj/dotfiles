@@ -1,0 +1,68 @@
+#!/bin/bash
+
+# This is a collection of functions that I use in my zshrc file.
+#
+# To use these functions, you can source this file in your zshrc file.
+#
+# Example:
+# source ~/.zsh_functions
+
+# This function will ssh into kube server using kubectl
+#
+# Usage:
+# kube-ssh <namespace> <env>
+
+declare -A kube_envs
+
+kube_envs=(
+  [sb]=sandbox
+  [sb01]=sandbox-01
+  [sb02]=sandbox-02
+  [sb03]=sandbox-03
+  [sb04]=sandbox-04
+  [sb05]=sandbox-05
+  [sb06]=sandbox-06
+  [sb07]=sandbox-07
+  [sb08]=sandbox-08
+  [sb09]=sandbox-09
+  [stg]=staging
+  [prd]=production
+)
+
+kube-ssh() {
+  if [ -z "$1" ] || [ -z "$2" ]; then
+    echo "Usage: kube-ssh <namespace> <env>"
+    return 1
+  fi
+  
+  if [ -z "${kube_envs[$2]}" ]; then
+    echo "Invalid environment"
+    return 1
+  fi
+
+  export KUBECONFIG=~/.kube/${kube_envs[$2]}.yaml
+  kubectl exec -it -n $1 $(kubectl get pods -n $1 --selector=app.kubernetes.io/name=$1-${kube_envs[$2]} --field-selector=status.phase==Running -o jsonpath="{.items[0].metadata.name}") -- /bin/bash
+}
+
+
+# This function will cd via zoxide and open a tmux session, then vi into the directory
+
+# Usage:
+#
+# opin <directory>
+
+opin() {
+  if [ -z "$1" ]; then
+    echo "Usage: opin <directory>"
+    return 1
+  fi
+
+  if zoxide query $1 > /dev/null 2>&1; then
+    z $1
+    tn -d -s $1
+    ta $1 \; send-keys 'nvim' C-m
+  else
+    echo "Nothin, Mudin"
+  fi
+}
+

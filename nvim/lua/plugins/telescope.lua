@@ -11,11 +11,11 @@ return {
       -- Find files (normal mode)
       vim.keymap.set('n', '<leader>ff', builtin.find_files, { desc = 'Find Files' })
 
-      -- Live grep (search content inside files)
-      vim.keymap.set('n', '<leader>fg', builtin.live_grep, { desc = 'Live Grep' })
-
       -- List buffers (open buffers in the current session)
       vim.keymap.set('n', '<leader>fb', builtin.buffers, { desc = 'Find Buffers' })
+
+      -- Live grep
+      vim.keymap.set('n', '<leader>fg', builtin.live_grep, { desc = 'Live Grep' })
 
       -- Help tags (search Neovim's help documentation)
       vim.keymap.set('n', '<leader>fh', builtin.help_tags, { desc = 'Find Help Tags' })
@@ -59,6 +59,19 @@ return {
     'nvim-telescope/telescope-ui-select.nvim',
     config = function()
       require("telescope").setup({
+        pickers = {
+          buffers = {
+            show_all_buffers = true,
+            sort_lastused = true,
+            theme = "dropdown",
+            previewer = false,
+            mappings = {
+              i = {
+                ["<c-d>"] = "delete_buffer",
+              }
+            }
+          }
+        },
         extensions = {
           ["ui-select"] = {
             require("telescope.themes").get_dropdown {

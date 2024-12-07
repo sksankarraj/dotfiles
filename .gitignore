@@ -1,4 +1,16 @@
-# ignored folder's
-gh
-github-copilot
-tmux/plugins
+# Ignore everything by default
+*
+
+# Unignore these specific files and folders
+!/.gitignore
+!nvim/
+!tmux/
+!wezterm/
+!README.md
+!bash/
+
+# Ensure all contents of the folders are also unignored
+!nvim/**
+!tmux/**
+!wezterm/**
+!bash/**

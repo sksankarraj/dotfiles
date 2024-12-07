@@ -1,0 +1,4 @@
+get_pw () {
+  security find-generic-password -ga "$1" -w
+}
+

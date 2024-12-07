@@ -2,8 +2,8 @@ local wezterm = require("wezterm")
 
 local config = wezterm.config_builder()
 
-config.font = wezterm.font("mononoki")
-config.font_size = 13
+config.font = wezterm.font("mononoki", {weight="Regular", stretch="Normal", style="Normal"})
+config.font_size = 12
 
 config.enable_tab_bar = false
 config.window_decorations = "RESIZE"
