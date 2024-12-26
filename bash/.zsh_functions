@@ -1,5 +1,5 @@
 #!/bin/bash
-
+source ~/.config/bash/.zsh_alias
 # This is a collection of functions that I use in my zshrc file.
 #
 # To use these functions, you can source this file in your zshrc file.
@@ -12,36 +12,38 @@
 # Usage:
 # kube-ssh <namespace> <env>
 
-declare -A kube_envs
+declare -A envs
 
-kube_envs=(
-  [sb]=sandbox
-  [sb01]=sandbox-01
-  [sb02]=sandbox-02
-  [sb03]=sandbox-03
-  [sb04]=sandbox-04
-  [sb05]=sandbox-05
-  [sb06]=sandbox-06
-  [sb07]=sandbox-07
-  [sb08]=sandbox-08
-  [sb09]=sandbox-09
-  [stg]=staging
-  [prd]=production
+envs=(
+  [sb]="sandbox,0"
+  [sb-01]="sandbox-01,5433"
+  [sb-02]="sandbox-02,5434"
+  [sb-03]="sandbox-03,5435"
+  [sb-04]="sandbox-04,5436"
+  [sb-05]="sandbox-05,5437"
+  [sb-06]="sandbox-06,5438"
+  [sb-07]="sandbox-07,5439"
+  [sb-08]="sandbox-08,5440"
+  [sb-09]="sandbox-09,5441"
+  [stg]="staging,5432"
+  [prd]="production,5432"
 )
 
-kube-ssh() {
+kex() {
   if [ -z "$1" ] || [ -z "$2" ]; then
     echo "Usage: kube-ssh <namespace> <env>"
     return 1
   fi
   
-  if [ -z "${kube_envs[$2]}" ]; then
+  if [ -z "${envs[$2]}" ]; then
     echo "Invalid environment"
     return 1
   fi
 
-  export KUBECONFIG=~/.kube/${kube_envs[$2]}.yaml
-  kubectl exec -it -n $1 $(kubectl get pods -n $1 --selector=app.kubernetes.io/name=$1-${kube_envs[$2]} --field-selector=status.phase==Running -o jsonpath="{.items[0].metadata.name}") -- /bin/bash
+  local env=$(echo "${envs[$2]}" | cut -d "," -f 1)
+  tsh kube login flow-${env}-eks-cluster
+  export KUBECONFIG=~/.kube/${env}.yaml
+  kubectl exec -it -n $1 $(kubectl get pods -n $1 --selector=app.kubernetes.io/name=$1-${env} --field-selector=status.phase==Running -o jsonpath="{.items[0].metadata.name}") -- /bin/bash
 }
 
 
@@ -66,3 +68,141 @@ opin() {
   fi
 }
 
+# Teleport functions
+#
+
+tsh_login() {
+  tsh login --proxy pluralsight.teleport.sh --auth okta
+}
+
+tsh_ssh() {
+  tsh ssh --login sankar-raj "$@"
+}
+
+tsh_prod() {
+  tsh_ssh -L 5432:localhost:5432 prod-gitprime-db-03a
+}
+
+tsh_sb_01() {
+  tsh_ssh -L 5434:localhost:5433 sandbox-db-01
+}
+
+tsh_sb_02() {
+  tsh_ssh -L 5434:localhost:5434 sandbox-db-01
+}
+
+tsh_sb_03() {
+  tsh_ssh -L 5434:localhost:5435 sandbox-db-01
+}
+
+tsh_sb_04() {
+  tsh_ssh -L 5434:localhost:5436 sandbox-db-01
+}
+
+tsh_sb_05() {
+  tsh_ssh -L 5434:localhost:5437 sandbox-db-01
+}
+
+tsh_sb_06() {
+  tsh_ssh -L 5434:localhost:5438 sandbox-db-01
+}
+
+tsh_sb_07() {
+  tsh_ssh -L 5434:localhost:5439 sandbox-db-01
+}
+
+tsh_sb_08() {
+  tsh_ssh -L 5434:localhost:5440 sandbox-db-01
+}
+
+tsh_sb_09() {
+  tsh_ssh -L 5434:localhost:5441 sandbox-db-01
+}
+
+tsh_stg() {
+  tsh_ssh -L 5432:localhost:5432 sandbox-db-01
+}
+
+get_pw () {
+  security find-generic-password -ga "$1" -w
+}
+
+
+# This function will check which process is running on the port given
+#
+# Usage: port <port number>
+
+port() {
+
+  if [ -z "$1" ]; then
+    echo "Usage: port <env>"
+    return 1
+  fi
+  
+  lsof -i :$1
+}
+
+
+# This function will check which process is running on the port given and kill it
+#
+# Usage: port <port number>
+
+kport() {
+
+  if [ -z "$1" ]; then
+    echo "Usage: port <env>"
+    return 1
+  fi
+  
+  PORT=$1
+
+  # Find the PID using lsof
+  PID=$(lsof -t -i :$PORT)
+
+  # Check if a PID was found
+  if [ -z "$PID" ]; then
+      echo "No process found on port $PORT."
+  else
+      # Kill the process
+      kill -9 $PID
+      echo "Process with PID $PID on port $PORT has been killed."
+  fi
+}
+
+# This function will ssh into the jump box using tsh and then login to the DB instance using psql
+#
+# Usage:
+#
+# db <env>
+
+db() {
+
+  if [ -z "$1" ]; then
+    echo "Usage: db <env>"
+    return 1
+  fi
+
+  local env=$(echo ${envs[$1]} | cut -d "," -f 1)
+  if [[ $1 == "sb"* ]]; then
+    env="sandbox"
+  fi
+
+  local db_port=$(echo ${envs[$1]} | cut -d "," -f 2)
+  local db_pass=$(get_pw DPBWD)
+  local db_user=$(get_pw DUBSR)
+  local db_name="flow_${env}"
+  local suffix=$1
+
+  if tmux has-session -t "tsh-db-$1" 2>/dev/null; then
+    echo "ho"
+    tmux kill-session -t "tsh-db-$1"
+  fi
+  tmux new-session -d -s "tsh-db-$1" "tsh-stg"
+      echo "hola"
+  export PGPASSWORD=${db_pass}
+  psql -h 0.0.0.0 -p ${db_port} -U${db_user} ${db_name}
+  # (
+  #   export PGPASSWORD=${db_pass}
+  #   tsh_${suffix//-/_} -t "psql -h 0.0.0.0 -p ${db_port} -U${db_user} ${db_name};"
+  # )
+}

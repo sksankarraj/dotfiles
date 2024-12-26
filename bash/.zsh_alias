@@ -59,7 +59,7 @@ alias cd="z"
 # teleport
 alias tsh-login='tsh login --proxy pluralsight.teleport.sh --auth okta'
 alias tsh-ssh='tsh ssh --login sankar-raj'
-alias tsh-proddb='tsh-ssh --login sankar-raj -L 5432:localhost:5432 prod-gitprime-db-03a'
+alias tsh-prod='tsh-ssh --login sankar-raj -L 5432:localhost:5432 prod-gitprime-db-03a'
 alias tsh-sb-01='tsh-ssh -L 5434:localhost:5433 sandbox-db-01'
 alias tsh-sb-02='tsh-ssh -L 5434:localhost:5434 sandbox-db-01'
 alias tsh-sb-03='tsh-ssh -L 5434:localhost:5435 sandbox-db-01'
