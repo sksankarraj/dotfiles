@@ -42,8 +42,16 @@ kex() {
 
   local env=$(echo "${envs[$2]}" | cut -d "," -f 1)
   tsh kube login flow-${env}-eks-cluster
-  export KUBECONFIG=~/.kube/${env}.yaml
-  kubectl exec -it -n $1 $(kubectl get pods -n $1 --selector=app.kubernetes.io/name=$1-${env} --field-selector=status.phase==Running -o jsonpath="{.items[0].metadata.name}") -- /bin/bash
+  # export KUBECONFIG=~/.kube/${env}.yaml
+
+  # Check if the pod is running, if not print error
+  pod=$(kubectl get pods -n $1 --selector=app.kubernetes.io/name=$1-${env} --field-selector=status.phase==Running -o jsonpath="{.items[0].metadata.name}" 2>/dev/null)
+  if [ -z "$pod" ]; then
+    echo "\033[0;31mError:\033[0m No running pods found for $1 in $env"
+    return 1
+  fi
+
+  kubectl exec -it -n $1 $pod -- /bin/bash
 }
 
 

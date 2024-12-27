@@ -1,5 +1,4 @@
 eval "$(zoxide init zsh)"
 
-source ~/.config/bash/.zsh_creds
 source ~/.config/bash/.zsh_alias
 source ~/.config/bash/.zsh_functions
