@@ -2,6 +2,7 @@ alias brew="arch -x86_64 brew"
 alias python=python3
 alias pip=pip3
 
+alias c=clear
 alias update="brew update"
 alias upgrade="brew upgrade"
 
@@ -72,4 +73,10 @@ alias tl='tmux ls'
 alias lg='lazygit'
 
 alias aws="aws --ca-bundle=/Users/sankarraj/.ssh/zscaler.pem"
+
+
+alias td='todo.sh'
+alias tda='todo.sh add'
+alias tdl='todo.sh list'
+alias tdc='todo.sh done'
 

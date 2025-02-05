@@ -2,13 +2,14 @@ local wezterm = require("wezterm")
 
 local config = wezterm.config_builder()
 
-config.font = wezterm.font("mononoki", {weight="Regular", stretch="Normal", style="Normal"})
+config.font = wezterm.font("GeistMono Nerd Font Mono", {weight="Regular"})
 config.font_size = 12
 
 config.enable_tab_bar = false
 config.window_decorations = "RESIZE"
 
-config.color_scheme = 'Catppuccin Mocha'
+config.color_scheme = 'Gruvbox light, hard (base16)'
+config.max_fps = 60
 
 local mux = wezterm.mux
 
@@ -21,4 +22,3 @@ end)
 config.native_macos_fullscreen_mode = true
 
 return config
-

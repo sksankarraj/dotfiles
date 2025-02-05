@@ -13,7 +13,7 @@ return {
 		},
 		config = function()
 			require("mason-lspconfig").setup({
-				ensure_installed = { "lua_ls", "ts_ls", "snyk_ls", "pyright", "terraformls" },
+				ensure_installed = { "lua_ls", "ts_ls", "pyright", "terraformls" },
 			})
 		end,
 	},
@@ -42,30 +42,30 @@ return {
           end
         end,
       })
-			lspconfig.snyk_ls.setup({
-				cmd = { "/usr/local/bin/snyk-ls" },
-				root_dir = function(name)
-					return lspconfig.util.find_git_ancestor(name) or vim.loop.os_homedir()
-				end,
-				init_options = {
-					activateSnykCode = "true",
-					enableTelemetry = "false",
-          activateSnykIaC = "false",
-					token = os.getenv("SNYK_TOKEN"),
-					filterSeverity = {
-						critical = true,
-						high = true,
-						medium = true,
-						low = false,
-					},
-					organization = "ps-flow",
-					enableSnykOpenBrowserActions = "false",
-          enableTrustedFoldersFeature = "true", -- Whether LS will prompt to trust a folder (default: true)
-          activateSnykCodeSecurity = "false", -- Enables Snyk Code Security reporting
-          activateSnykCodeQuality = "false", -- Enable Snyk Code Quality issue reporting (Beta, only in IDEs and LS)
-          scanningMode = "manual", -- Specifies the mode for scans: "auto" for background scans or "manual" for scans on command
-				},
-			})
+			-- lspconfig.snyk_ls.setup({
+			-- 	cmd = { "/usr/local/bin/snyk-ls" },
+			-- 	root_dir = function(name)
+			-- 		return lspconfig.util.find_git_ancestor(name) or vim.loop.os_homedir()
+			-- 	end,
+			-- 	init_options = {
+			-- 		activateSnykCode = "true",
+			-- 		enableTelemetry = "false",
+			--        activateSnykIaC = "false",
+			-- 		token = os.getenv("SNYK_TOKEN"),
+			-- 		filterSeverity = {
+			-- 			critical = true,
+			-- 			high = true,
+			-- 			medium = true,
+			-- 			low = false,
+			-- 		},
+			-- 		organization = "ps-flow",
+			-- 		enableSnykOpenBrowserActions = "false",
+			--        enableTrustedFoldersFeature = "true", -- Whether LS will prompt to trust a folder (default: true)
+			--        activateSnykCodeSecurity = "false", -- Enables Snyk Code Security reporting
+			--        activateSnykCodeQuality = "false", -- Enable Snyk Code Quality issue reporting (Beta, only in IDEs and LS)
+			--        scanningMode = "manual", -- Specifies the mode for scans: "auto" for background scans or "manual" for scans on command
+			-- 	},
+			-- })
 
 			vim.keymap.set("n", "K", vim.lsp.buf.hover, {})
 			vim.keymap.set("n", "gd", vim.lsp.buf.definition, {})

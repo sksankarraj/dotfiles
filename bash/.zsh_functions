@@ -1,5 +1,4 @@
 #!/bin/bash
-source ~/.config/bash/.zsh_alias
 # This is a collection of functions that I use in my zshrc file.
 #
 # To use these functions, you can source this file in your zshrc file.
@@ -7,10 +6,6 @@ source ~/.config/bash/.zsh_alias
 # Example:
 # source ~/.zsh_functions
 
-# This function will ssh into kube server using kubectl
-#
-# Usage:
-# kube-ssh <namespace> <env>
 
 declare -A envs
 
@@ -26,35 +21,83 @@ envs=(
   [sb-08]="sandbox-08,5440"
   [sb-09]="sandbox-09,5441"
   [stg]="staging,5432"
-  [prd]="production,5432"
+  [prod]="production,5432"
 )
 
-kex() {
-  if [ -z "$1" ] || [ -z "$2" ]; then
-    echo "Usage: kube-ssh <namespace> <env>"
-    return 1
-  fi
-  
-  if [ -z "${envs[$2]}" ]; then
+
+# This function will login to the kubernetes cluster using tsh
+#
+# Usage:
+# login-tsh <env>
+login-tsh() {
+  if [ -z "${envs[$1]}" ]; then
     echo "Invalid environment"
     return 1
   fi
 
-  local env=$(echo "${envs[$2]}" | cut -d "," -f 1)
-  tsh kube login flow-${env}-eks-cluster
-  # export KUBECONFIG=~/.kube/${env}.yaml
+  local env=$(echo "${envs[$1]}" | cut -d "," -f 1)
+  if tsh kube ls | grep "*" | grep -q "flow-${env}-eks-cluster"; then
+    echo "Already logged in to flow-${env}-eks-cluster"
+  else
+    tsh kube login flow-${env}-eks-cluster
+  fi
+}
 
+
+# This function will ssh into kube server using kubectl
+#
+# Usage:
+# kex <namespace> <env>
+kex() {
+  if [ -z "$1" ] || [ -z "$2" ]; then
+    echo "Usage: kex <namespace> <env>"
+    return 1
+  fi
+
+  login-tsh $2
+  
   # Check if the pod is running, if not print error
-  pod=$(kubectl get pods -n $1 --selector=app.kubernetes.io/name=$1-${env} --field-selector=status.phase==Running -o jsonpath="{.items[0].metadata.name}" 2>/dev/null)
+  local ns=$1
+  if [ "$2" = "sb" ]; then
+    ns="sandbox-$1"
+  fi
+  local env=$(echo "${envs[$2]}" | cut -d "," -f 1)
+  local pod=$(kubectl get pods -n $ns --selector=app.kubernetes.io/name=$1-${env} --field-selector=status.phase==Running -o jsonpath="{.items[0].metadata.name}" 2>/dev/null)
   if [ -z "$pod" ]; then
     echo "\033[0;31mError:\033[0m No running pods found for $1 in $env"
     return 1
   fi
 
-  kubectl exec -it -n $1 $pod -- /bin/bash
+  kubectl exec -it -n $ns $pod -- /bin/bash
 }
 
 
+# This function will get logs from kube server using kubectl
+#
+# Usage:
+# klogs <namespace> <env>
+klogs() {
+  if [ -z "$1" ] || [ -z "$2" ]; then
+    echo "Usage: klogs <namespace> <env>"
+    return 1
+  fi
+
+  login-tsh $2
+  
+  # Check if the pod is running, if not print error
+  local ns=$1
+  if [ "$2" = "sb" ]; then
+    ns="sandbox-$1"
+  fi
+  local env=$(echo "${envs[$2]}" | cut -d "," -f 1)
+  local pod=$(kubectl get pods -n $ns --selector=app.kubernetes.io/name=$1-${env} --field-selector=status.phase==Running -o jsonpath="{.items[0].metadata.name}" 2>/dev/null)
+  if [ -z "$pod" ]; then
+    echo "\033[0;31mError:\033[0m No running pods found for $1 in $env"
+    return 1
+  fi
+
+  kubectl logs --tail 20 -f -n $ns $pod
+}
 # This function will cd via zoxide and open a tmux session, then vi into the directory
 
 # Usage:
@@ -67,72 +110,18 @@ opin() {
     return 1
   fi
 
-  if zoxide query $1 > /dev/null 2>&1; then
+  if [ "$1" = "." ]; then
+    local current_dir_name=$(basename $(pwd))
+    tn -d -s $current_dir_name
+    ta $current_dir_name \; send-keys 'nvim' C-m
+  elif zoxide query $1 > /dev/null 2>&1; then
+    cd ~
     z $1
     tn -d -s $1
     ta $1 \; send-keys 'nvim' C-m
   else
     echo "Nothin, Mudin"
   fi
-}
-
-# Teleport functions
-#
-
-tsh_login() {
-  tsh login --proxy pluralsight.teleport.sh --auth okta
-}
-
-tsh_ssh() {
-  tsh ssh --login sankar-raj "$@"
-}
-
-tsh_prod() {
-  tsh_ssh -L 5432:localhost:5432 prod-gitprime-db-03a
-}
-
-tsh_sb_01() {
-  tsh_ssh -L 5434:localhost:5433 sandbox-db-01
-}
-
-tsh_sb_02() {
-  tsh_ssh -L 5434:localhost:5434 sandbox-db-01
-}
-
-tsh_sb_03() {
-  tsh_ssh -L 5434:localhost:5435 sandbox-db-01
-}
-
-tsh_sb_04() {
-  tsh_ssh -L 5434:localhost:5436 sandbox-db-01
-}
-
-tsh_sb_05() {
-  tsh_ssh -L 5434:localhost:5437 sandbox-db-01
-}
-
-tsh_sb_06() {
-  tsh_ssh -L 5434:localhost:5438 sandbox-db-01
-}
-
-tsh_sb_07() {
-  tsh_ssh -L 5434:localhost:5439 sandbox-db-01
-}
-
-tsh_sb_08() {
-  tsh_ssh -L 5434:localhost:5440 sandbox-db-01
-}
-
-tsh_sb_09() {
-  tsh_ssh -L 5434:localhost:5441 sandbox-db-01
-}
-
-tsh_stg() {
-  tsh_ssh -L 5432:localhost:5432 sandbox-db-01
-}
-
-get_pw () {
-  security find-generic-password -ga "$1" -w
 }
 
 
@@ -156,25 +145,26 @@ port() {
 # Usage: port <port number>
 
 kport() {
+    PORT=$1
+    if [ -z "$PORT" ]; then
+        echo "Usage: kill_port <port_number>"
+        return 1
+    fi
 
-  if [ -z "$1" ]; then
-    echo "Usage: port <env>"
-    return 1
-  fi
-  
-  PORT=$1
+    PID=$(lsof -t -i :$PORT)
+    if [ -n "$PID" ]; then
+        echo "Killing process $PID on port $PORT..."
+        kill -9 $PID && echo "Port $PORT has been freed."
+    else
+        echo "No process found on port $PORT."
+    fi
 
-  # Find the PID using lsof
-  PID=$(lsof -t -i :$PORT)
-
-  # Check if a PID was found
-  if [ -z "$PID" ]; then
-      echo "No process found on port $PORT."
-  else
-      # Kill the process
-      kill -9 $PID
-      echo "Process with PID $PID on port $PORT has been killed."
-  fi
+    # Verify the port is free
+    if lsof -i :$PORT; then
+        echo "Warning: Port $PORT is still in use. Additional cleanup may be required."
+    else
+        echo "Port $PORT is completely free."
+    fi
 }
 
 # This function will ssh into the jump box using tsh and then login to the DB instance using psql
@@ -184,7 +174,6 @@ kport() {
 # db <env>
 
 db() {
-
   if [ -z "$1" ]; then
     echo "Usage: db <env>"
     return 1
@@ -194,23 +183,42 @@ db() {
   if [[ $1 == "sb"* ]]; then
     env="sandbox"
   fi
+  
+  local tsh_host="sandbox-db-01"
+  if [ "$env" = "production" ]; then
+    tsh_host="prod-gitprime-db-03a"
+  fi
+
+  echo "Connecting to ${env} database..."
 
   local db_port=$(echo ${envs[$1]} | cut -d "," -f 2)
   local db_pass=$(get_pw DPBWD)
   local db_user=$(get_pw DUBSR)
   local db_name="flow_${env}"
-  local suffix=$1
+  kport ${db_port} > /dev/null 2>&1
 
-  if tmux has-session -t "tsh-db-$1" 2>/dev/null; then
-    echo "ho"
-    tmux kill-session -t "tsh-db-$1"
-  fi
-  tmux new-session -d -s "tsh-db-$1" "tsh-stg"
-      echo "hola"
+  # wezterm cli --prefer-mux spawn -- tsh ssh --login sankar-raj -L 5432:localhost:5432 sandbox-db-01
+  tsh login --proxy pluralsight.teleport.sh --auth okta > /dev/null
+
+  nohup tsh ssh --login sankar-raj -N -L ${db_port}:localhost:${db_port} ${tsh_host} > /dev/null 2>&1 &
+  sleep 5
+
   export PGPASSWORD=${db_pass}
-  psql -h 0.0.0.0 -p ${db_port} -U${db_user} ${db_name}
-  # (
-  #   export PGPASSWORD=${db_pass}
-  #   tsh_${suffix//-/_} -t "psql -h 0.0.0.0 -p ${db_port} -U${db_user} ${db_name};"
-  # )
+  pgcli -h localhost -p ${db_port} -U${db_user} ${db_name}
+}
+
+# This function is decode jWT tokens in terminal and print the output in a readable format
+#
+# Usage:
+# jwt <token>
+
+jwt() {
+  if [ -z "$1" ]; then
+    echo "Usage: jwt <token>"
+    return 1
+  fi
+
+  echo $1 | tr '.' '\n' | awk '{print $0}' | while read line; do
+    echo $line | base64 --decode
+  done
 }
