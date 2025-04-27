@@ -13,14 +13,14 @@ return {
 		},
 		config = function()
 			require("mason-lspconfig").setup({
-				ensure_installed = { "lua_ls", "ts_ls", "pyright", "terraformls" },
+				ensure_installed = { "lua_ls", "ts_ls", "pyright", "terraformls", "groovyls" },
 			})
 		end,
 	},
 	{
 		"neovim/nvim-lspconfig",
 		config = function()
-			local capabilities = require("blink.cmp").get_lsp_capabilities()
+      local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
 
 			local lspconfig = require("lspconfig")
@@ -38,6 +38,8 @@ return {
         on_new_config = function(config, root_dir)
           local env = vim.trim(vim.fn.system('cd "' .. root_dir .. '"; poetry env info -p 2>/dev/null'))
           if string.len(env) > 0 then
+            -- print the python binary path
+            print('Using python from poetry: ' .. env)
             config.settings.python.pythonPath = env .. '/bin/python'
           end
         end,

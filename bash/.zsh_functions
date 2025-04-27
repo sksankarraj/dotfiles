@@ -25,6 +25,14 @@ envs=(
 )
 
 
+# This function will retrieve the secret from keychain
+#
+# usage:
+# get_pw <secret-name>
+get_pw() {
+  security find-generic-password -ga "$1" -w
+}
+
 # This function will login to the kubernetes cluster using tsh
 #
 # Usage:
@@ -184,10 +192,6 @@ db() {
     env="sandbox"
   fi
   
-  local tsh_host="sandbox-db-01"
-  if [ "$env" = "production" ]; then
-    tsh_host="prod-gitprime-db-03a"
-  fi
 
   echo "Connecting to ${env} database..."
 
@@ -196,15 +200,14 @@ db() {
   local db_user=$(get_pw DUBSR)
   local db_name="flow_${env}"
   kport ${db_port} > /dev/null 2>&1
-
-  # wezterm cli --prefer-mux spawn -- tsh ssh --login sankar-raj -L 5432:localhost:5432 sandbox-db-01
-  tsh login --proxy pluralsight.teleport.sh --auth okta > /dev/null
-
-  nohup tsh ssh --login sankar-raj -N -L ${db_port}:localhost:${db_port} ${tsh_host} > /dev/null 2>&1 &
-  sleep 5
+  local host="sandbox-db-01.gitprime-ops.com"
+  if [ "$env" = "production" ]; then
+    host="prod-db-read.gitprime-ops.com"
+    db_user="sankar.raj"
+  fi
 
   export PGPASSWORD=${db_pass}
-  pgcli -h localhost -p ${db_port} -U${db_user} ${db_name}
+  pgcli -h ${host} -p ${db_port} -U${db_user} ${db_name} sslmode=prefer
 }
 
 # This function is decode jWT tokens in terminal and print the output in a readable format
