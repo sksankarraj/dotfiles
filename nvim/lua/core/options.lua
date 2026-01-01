@@ -44,3 +44,13 @@ vim.api.nvim_create_autocmd('TextYankPost', {
   end,
 })
 
+-- Organize imports in TypeScript files on save
+vim.api.nvim_create_autocmd('BufWritePre', {
+  pattern = { '*.ts', '*.tsx' },
+  callback = function()
+    vim.lsp.buf.execute_command({
+      command = "_typescript.organizeImports",
+      arguments = { vim.api.nvim_buf_get_name(0) },
+    })
+  end,
+})

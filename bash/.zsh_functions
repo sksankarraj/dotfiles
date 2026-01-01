@@ -10,16 +10,16 @@
 declare -A envs
 
 envs=(
-  [sb]="sandbox,0"
-  [sb-01]="sandbox-01,5433"
-  [sb-02]="sandbox-02,5434"
-  [sb-03]="sandbox-03,5435"
-  [sb-04]="sandbox-04,5436"
-  [sb-05]="sandbox-05,5437"
-  [sb-06]="sandbox-06,5438"
-  [sb-07]="sandbox-07,5439"
-  [sb-08]="sandbox-08,5440"
-  [sb-09]="sandbox-09,5441"
+  [sb]="sb,0"
+  [sb-01]="sb-01,5433"
+  [sb-02]="sb-02,5434"
+  [sb-03]="sb-03,5435"
+  [sb-04]="sb-04,5436"
+  [sb-05]="sb-05,5437"
+  [sb-06]="sb-06,5438"
+  [sb-07]="sb-07,5439"
+  [sb-08]="sb-08,5440"
+  [sb-09]="sb-09,5441"
   [stg]="staging,5432"
   [prod]="production,5432"
 )
@@ -67,7 +67,7 @@ kex() {
   # Check if the pod is running, if not print error
   local ns=$1
   if [ "$2" = "sb" ]; then
-    ns="sandbox-$1"
+    ns="sb-$1"
   fi
   local env=$(echo "${envs[$2]}" | cut -d "," -f 1)
   local pod=$(kubectl get pods -n $ns --selector=app.kubernetes.io/name=$1-${env} --field-selector=status.phase==Running -o jsonpath="{.items[0].metadata.name}" 2>/dev/null)
@@ -95,7 +95,7 @@ klogs() {
   # Check if the pod is running, if not print error
   local ns=$1
   if [ "$2" = "sb" ]; then
-    ns="sandbox-$1"
+    ns="sb-$1"
   fi
   local env=$(echo "${envs[$2]}" | cut -d "," -f 1)
   local pod=$(kubectl get pods -n $ns --selector=app.kubernetes.io/name=$1-${env} --field-selector=status.phase==Running -o jsonpath="{.items[0].metadata.name}" 2>/dev/null)
@@ -187,27 +187,18 @@ db() {
     return 1
   fi
 
+  local db_url=$(pass db/${1})
   local env=$(echo ${envs[$1]} | cut -d "," -f 1)
-  if [[ $1 == "sb"* ]]; then
-    env="sandbox"
-  fi
+  local db_port=$(echo ${envs[$1]} | cut -d "," -f 2)
   
-
   echo "Connecting to ${env} database..."
 
-  local db_port=$(echo ${envs[$1]} | cut -d "," -f 2)
-  local db_pass=$(get_pw DPBWD)
-  local db_user=$(get_pw DUBSR)
-  local db_name="flow_${env}"
-  kport ${db_port} > /dev/null 2>&1
-  local host="sandbox-db-01.gitprime-ops.com"
-  if [ "$env" = "production" ]; then
-    host="prod-db-read.gitprime-ops.com"
-    db_user="sankar.raj"
-  fi
 
-  export PGPASSWORD=${db_pass}
-  pgcli -h ${host} -p ${db_port} -U${db_user} ${db_name} sslmode=prefer
+  # Ensure the port is free
+  echo "Checking if port ${db_port} is free, if not killing the process using it..."
+  kport ${db_port} > /dev/null 2>&1
+
+  pgcli ${db_url}
 }
 
 # This function is decode jWT tokens in terminal and print the output in a readable format

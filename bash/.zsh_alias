@@ -49,6 +49,7 @@ alias dsp='docker system prune'
 alias dcb='docker compose build'
 alias dcu='docker compose up'
 alias dcub='docker compose up --build'
+alias dcd='docker compose down'
 
 # git
 alias ghop='gh repo view --web'
