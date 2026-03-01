@@ -1,38 +1,40 @@
+local catppuccin = require("catppuccin.palettes").get_palette("mocha")
+
 local colors = {
-  bg       = '#202328',
-  fg       = '#bbc2cf',
-  yellow   = '#ECBE7B',
-  cyan     = '#008080',
-  darkblue = '#081633',
-  green    = '#98be65',
-  orange   = '#FF8800',
-  violet   = '#a9a1e1',
-  magenta  = '#c678dd',
-  blue     = '#51afef',
-  red      = '#ec5f67',
+  bg       = catppuccin.base,
+  fg       = catppuccin.text,
+  yellow   = catppuccin.yellow,
+  cyan     = catppuccin.sky,
+  darkblue = catppuccin.mantle,
+  green    = catppuccin.green,
+  orange   = catppuccin.peach,
+  violet   = catppuccin.lavender,
+  magenta  = catppuccin.pink,
+  blue     = catppuccin.blue,
+  red      = catppuccin.red,
 }
 
 local mode_color = {
-  n = colors.red,
-  i = colors.green,
-  v = colors.blue,
+  n  = colors.red,
+  i  = colors.green,
+  v  = colors.blue,
   [''] = colors.blue,
-  V = colors.blue,
-  c = colors.magenta,
+  V  = colors.blue,
+  c  = colors.magenta,
   no = colors.red,
-  s = colors.orange,
-  S = colors.orange,
+  s  = colors.orange,
+  S  = colors.orange,
   [''] = colors.orange,
   ic = colors.yellow,
-  R = colors.violet,
+  R  = colors.violet,
   Rv = colors.violet,
   cv = colors.red,
   ce = colors.red,
-  r = colors.cyan,
+  r  = colors.cyan,
   rm = colors.cyan,
   ['r?'] = colors.cyan,
   ['!'] = colors.red,
-  t = colors.red,
+  t  = colors.red,
 }
 
 local conditions = {
@@ -55,7 +57,7 @@ local config = {
     -- Disable sections and component separators
     component_separators = '',
     section_separators = '',
-    theme = 'gruvbox-material',
+    theme = 'catppuccin',
   },
   sections = {
     -- these are to remove the defaults

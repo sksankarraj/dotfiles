@@ -1,7 +1,7 @@
 return {
   {
     "nvim-telescope/telescope.nvim",
-    dependencies = { {"nvim-lua/plenary.nvim"}, {"nvim-tree/nvim-web-devicons"} },
+    dependencies = { {"nvim-lua/plenary.nvim"},},
     config = function()
       require('telescope').setup{
         defaults = {
@@ -21,7 +21,7 @@ return {
       local km = vim.keymap
       local builtin = require('telescope.builtin')
 
-      km.set("n", "<leader>ff", builtin.find_files, { desc = "Find Files" })
+      km.set("n", "<leader>fa", builtin.find_files, { desc = "Find Files" })
       km.set("n", "<leader>fb", builtin.buffers, { desc = "Buffers"  })
 
       -- Live grep
@@ -29,7 +29,7 @@ return {
       km.set("n", "<leader>fh", builtin.help_tags, { desc = "Help Pages" })
 
       -- git files search (find files using grep)
-      km.set("n", "<leader>ffgit", builtin.git_files, { desc = "Git Files"  })
+      km.set("n", "<leader>ff", builtin.git_files, { desc = "Git Files"  })
       km.set("v", '<Leader>8', function()
         require('telescope.builtin').grep_string({})
       end)

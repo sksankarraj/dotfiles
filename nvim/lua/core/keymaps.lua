@@ -43,3 +43,14 @@ km.set('n', '<leader>V', ':vsplit<CR>', { noremap = true, silent = true })
 km.set('n', '<leader>C', ':split<CR>', { noremap = true, silent = true })
 km.set('n', '<leader>D', ':bd<CR>', { noremap = true, silent = true })
 km.set('n', '<leader>sd', function() vim.diagnostic.open_float() end)
+
+
+vim.keymap.set("n", "<leader>r", function()
+  local file = vim.fn.expand("%")
+  local output = vim.fn.expand("%:r")
+  vim.cmd("w") -- save
+  vim.cmd("!" ..
+    "clang -Wall -Wextra -Werror -std=c17 -g " ..
+    "-fsanitize=address,undefined -fno-omit-frame-pointer " ..
+    file .. " -o " .. output .. ".o")
+end)
