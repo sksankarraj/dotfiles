@@ -5,6 +5,10 @@ return {
   lazy = false,
 
   opts = {
+    flavour = "mocha",
+    integrations = {
+      lualine = true
+    },
     styles = {
       comments = { "italic" },
       conditionals = { "italic" },
