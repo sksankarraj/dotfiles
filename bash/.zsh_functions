@@ -262,3 +262,8 @@ ghprs() {
     printf "  URL:     %s\n" "$url"
   done
 }
+
+
+whoison() {
+  lsof -nP -iTCP:$1 -sTCP:LISTEN;
+}
