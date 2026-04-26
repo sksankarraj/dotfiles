@@ -22,6 +22,8 @@ envs=(
   [sb-09]="sb-09,5441"
   [stg]="staging,5432"
   [prod]="production,5432"
+  [im_stg]="instance,5532"
+  [im_sb]="instance,5534"
 )
 
 
@@ -113,25 +115,33 @@ klogs() {
 # opin <directory>
 
 opin() {
-  if [ -z "$1" ]; then
-    echo "Usage: opin <directory>"
-    return 1
-  fi
+  [[ -z "$1" ]] && { echo "Usage: opin <directory>"; return 1 }
 
-  if [ "$1" = "." ]; then
-    local current_dir_name=$(basename $(pwd))
-    tn -d -s $current_dir_name
-    ta $current_dir_name \; send-keys 'nvim' C-m
-  elif zoxide query $1 > /dev/null 2>&1; then
-    cd ~
-    z $1
-    tn -d -s $1
-    ta $1 \; send-keys 'nvim' C-m
+  local target="$1"
+  local dir
+  local session
+
+  if [[ "$target" == "." ]]; then
+    dir="$PWD"
   else
-    echo "Nothin, Mudin"
+    dir=$(zoxide query "$target" 2>/dev/null) || {
+      echo "Nothin, Mudin"
+      return 1
+    }
   fi
-}
 
+  cd "$dir" || return 1
+
+  session=${dir:t}
+  session=${session//[^a-zA-Z0-9]/_}
+
+  if ! tmux has-session -t "$session" 2>/dev/null; then
+    tmux new-session -d -s "$session" -c "$dir"
+    tmux send-keys -t "$session" 'nvim' C-m
+  fi
+
+  tmux attach -t "$session"
+}
 
 # This function will check which process is running on the port given
 #
@@ -267,3 +277,48 @@ ghprs() {
 whoison() {
   lsof -nP -iTCP:$1 -sTCP:LISTEN;
 }
+
+# Get DB vars from pass
+generate_db_env() {
+  DATABASE_URL="$(pass db/stg)"
+
+  url_no_proto="${DATABASE_URL#postgresql://}"
+
+  user_pass="${url_no_proto%@*}"
+  DB_USER="${user_pass%%:*}"
+  DB_PASSWORD="${user_pass#*:}"
+
+  host_port_db="${url_no_proto#*@}"
+
+  host_port="${host_port_db%%/*}"
+  DB_HOST="${host_port%%:*}"
+  DB_PORT="${host_port#*:}"
+
+  db_with_params="${host_port_db#*/}"
+  DB_NAME="${db_with_params%%\?*}"
+}
+
+# Load DB vars into cache file and source it.
+load_db_env() {
+  DB_ENV_CACHE="$HOME/.db_env_cache"
+  if [ -f "$DB_ENV_CACHE" ]; then
+    source "$DB_ENV_CACHE"
+  else
+    echo "Generating DB env..."
+
+    generate_db_env
+
+    cat > "$DB_ENV_CACHE" <<EOF
+export COMPOSE_BAKE=true
+export DB_USER="$DB_USER"
+export DB_PASSWORD="$DB_PASSWORD"
+export DB_HOST="$DB_HOST"
+export DB_PORT="$DB_PORT"
+export DB_NAME="$DB_NAME"
+EOF
+
+    source "$DB_ENV_CACHE"
+  fi
+}
+
+load_db_env

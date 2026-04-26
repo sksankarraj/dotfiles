@@ -1,6 +1,10 @@
 alias python=python3
 alias pip=pip3
 
+alias cd="z"
+
+alias lg='lazygit'
+
 alias c=clear
 alias update="brew update"
 alias upgrade="brew upgrade"
@@ -16,26 +20,8 @@ alias tfay='terraform apply -auto-approve'
 alias tfdy='terraform destroy -auto-approve'
 alias tfinu='terraform init -upgrade'
 
+alias aws="aws --ca-bundle=/Users/sankarraj/.ssh/zscaler.pem"
 alias awslocal='aws --endpoint-url="http://localhost:4566"'
-
-alias vi=nvim
-alias vim=nvim
-alias cd="z"
-
-# teleport
-alias tsh-login='tsh login --proxy pluralsight.teleport.sh --auth okta'
-alias tsh-ssh='tsh ssh --login sankar-raj'
-alias tsh-prod='tsh-ssh --login sankar-raj -L 5432:localhost:5432 prod-gitprime-db-03a'
-alias tsh-sb-01='tsh-ssh -L 5434:localhost:5433 sandbox-db-01'
-alias tsh-sb-02='tsh-ssh -L 5434:localhost:5434 sandbox-db-01'
-alias tsh-sb-03='tsh-ssh -L 5434:localhost:5435 sandbox-db-01'
-alias tsh-sb-04='tsh-ssh -L 5434:localhost:5436 sandbox-db-01'
-alias tsh-sb-05='tsh-ssh -L 5434:localhost:5437 sandbox-db-01'
-alias tsh-sb-06='tsh-ssh -L 5434:localhost:5438 sandbox-db-01'
-alias tsh-sb-07='tsh-ssh -L 5434:localhost:5439 sandbox-db-01'
-alias tsh-sb-08='tsh-ssh -L 5434:localhost:5440 sandbox-db-01'
-alias tsh-sb-09='tsh-ssh -L 5434:localhost:5441 sandbox-db-01'
-alias tsh-stg='tsh-ssh -L 5432:localhost:5432 sandbox-db-01'
 
 # Docker
 alias dk='docker'
@@ -57,25 +43,12 @@ alias gpm="git pull origin main"
 alias gls="git log --pretty=format:\"%C(yellow)%h%Cred%d\\ %Creset%s%Cgreen\\ [%cn]\" --decorate"
 
 # Some tmux-related shell aliases
-# Attaches tmux to the last session; creates a new session if none exists.
 alias t='tmux attach || tmux new-session'
-
-# Attaches tmux to a session (example: ta portal)
 alias ta='tmux a -t'
-
-# Creates a new session
 alias tn='tmux new'
-
-# Lists all ongoing sessions
 alias tl='tmux ls'
-
-alias lg='lazygit'
-
-alias aws="aws --ca-bundle=/Users/sankarraj/.ssh/zscaler.pem"
-
 
 alias td='todo.sh'
 alias tda='todo.sh add'
 alias tdl='todo.sh list'
 alias tdc='todo.sh done'
-

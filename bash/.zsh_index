@@ -1,5 +1,7 @@
 eval "$(zoxide init zsh)"
 
+RPROMPT='%D{%H:%M:%S}'
+
 source ~/.config/bash/.zsh_alias
 source ~/.config/bash/.zsh_exports
 source ~/.config/bash/.zsh_functions

@@ -1,1 +1,47 @@
 export COMPOSE_BAKE=true
+export JAVA_HOME=$(/usr/libexec/java_home -v 17)
+
+generate_db_env() {
+  DATABASE_URL="$(pass db/stg)"
+
+  url_no_proto="${DATABASE_URL#postgresql://}"
+
+  user_pass="${url_no_proto%@*}"
+  DB_USER="${user_pass%%:*}"
+  DB_PASSWORD="${user_pass#*:}"
+
+  host_port_db="${url_no_proto#*@}"
+
+  host_port="${host_port_db%%/*}"
+  DB_HOST="${host_port%%:*}"
+  DB_PORT="${host_port#*:}"
+
+  db_with_params="${host_port_db#*/}"
+  DB_NAME="${db_with_params%%\?*}"
+}
+
+ENV_CACHE="$HOME/.db_env_cache"
+
+load_db_env() {
+  if [ -f "$ENV_CACHE" ]; then
+    source "$ENV_CACHE"
+  else
+    echo "Generating DB env..."
+
+    generate_db_env
+
+    cat > "$ENV_CACHE" <<EOF
+export COMPOSE_BAKE=true
+export DB_USER="$DB_USER"
+export DB_PASSWORD="$DB_PASSWORD"
+export DB_HOST="$DB_HOST"
+export DB_PORT="$DB_PORT"
+export DB_NAME="$DB_NAME"
+EOF
+
+    source "$ENV_CACHE"
+  fi
+}
+
+load_db_env
+
