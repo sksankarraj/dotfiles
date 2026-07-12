@@ -15,6 +15,7 @@
 !tmux/**
 !wezterm/**
 !bash/**
+!vim/**
 
 # Log files
 *.log

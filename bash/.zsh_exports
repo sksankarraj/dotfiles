@@ -1,2 +1,15 @@
+export EDITOR='nvim'
+export VISUAL='nvim'
 export COMPOSE_BAKE=true
-export JAVA_HOME=$(/usr/libexec/java_home -v 17)
+export JAVA_HOME="/Library/Java/JavaVirtualMachines/microsoft-17.jdk/Contents/Home"
+[[ -d "$JAVA_HOME" ]] || export JAVA_HOME="$(/usr/libexec/java_home -v 17 2>/dev/null)"
+
+export ENV_FORGE_JMWE_CONNECT_KEY=com.innovalog.mwec
+export JMWE_CONNECT_KEY=com.innovalog.mwec
+export JMWE_BASE_URL=https://YOUR_URL.eu.ngrok.io
+export APPFIRE_AUTH_KEY=appfire-auth-stage
+export APPFIRE_AUTH_URL=https://app.auth-stage.api.appfire.net
+export FORGE_DEV_ENVIRONMENT=sankar-dev
+export JMWE_FORGE_ID=764b078d-4c0e-4e3f-9f0d-cb4a84ca6ac2
+export NEXUS_INNOVALOG_READONLY_USER=sankar.raj@appfire.com
+export NEXUS_INNOVALOG_READONLY_TOKEN="$(pass nexus/readonly-token)"

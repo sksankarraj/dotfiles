@@ -52,3 +52,12 @@ alias td='todo.sh'
 alias tda='todo.sh add'
 alias tdl='todo.sh list'
 alias tdc='todo.sh done'
+
+# Cursor CLI
+alias ca='cursor agent'
+alias cay='cursor agent --yolo'
+alias cap='cursor agent --plan'
+alias caa='cursor agent --mode=ask'
+alias car='cursor agent --resume'
+alias cac='cursor agent --continue'
+alias cas='cursor agent status'

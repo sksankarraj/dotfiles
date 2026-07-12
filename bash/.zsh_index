@@ -1,4 +1,12 @@
-eval "$(zoxide init zsh)"
+# Cache `zoxide init` output; regenerate only when the zoxide binary changes.
+_zoxide_bin="$(command -v zoxide)"
+_zoxide_cache="$HOME/.cache/zoxide_init.zsh"
+if [[ -n "$_zoxide_bin" && ( ! -f "$_zoxide_cache" || "$_zoxide_bin" -nt "$_zoxide_cache" ) ]]; then
+  mkdir -p "$HOME/.cache"
+  "$_zoxide_bin" init zsh > "$_zoxide_cache"
+fi
+[[ -f "$_zoxide_cache" ]] && source "$_zoxide_cache"
+unset _zoxide_bin _zoxide_cache
 
 RPROMPT='%D{%H:%M:%S}'
 

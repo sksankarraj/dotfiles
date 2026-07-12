@@ -140,7 +140,11 @@ opin() {
     tmux send-keys -t "$session" 'nvim' C-m
   fi
 
-  tmux attach -t "$session"
+  if [[ -n "$TMUX" ]]; then
+    tmux switch-client -t "$session"
+  else
+    tmux attach -t "$session"
+  fi
 }
 
 # This function will check which process is running on the port given
@@ -276,6 +280,47 @@ ghprs() {
 
 whoison() {
   lsof -nP -iTCP:$1 -sTCP:LISTEN;
+}
+
+# Open a tmux session with cursor agent in the workspace
+# Uses zoxide for directory resolution, same as opin
+copin() {
+  [[ -z "$1" ]] && { echo "Usage: copin <directory>"; return 1 }
+
+  local target="$1"
+  local dir
+
+  if [[ "$target" == "." ]]; then
+    dir="$PWD"
+  else
+    dir=$(zoxide query "$target" 2>/dev/null) || {
+      echo "Nothin, Mudin"
+      return 1
+    }
+  fi
+
+  cd "$dir" || return 1
+
+  local session="ca_${dir:t}"
+  session=${session//[^a-zA-Z0-9_]/_}
+
+  if ! tmux has-session -t "$session" 2>/dev/null; then
+    tmux new-session -d -s "$session" -c "$dir"
+    tmux send-keys -t "$session" 'cursor agent' C-m
+  fi
+
+  if [[ -n "$TMUX" ]]; then
+    tmux switch-client -t "$session"
+  else
+    tmux attach -t "$session"
+  fi
+}
+
+# Pipe a file into cursor agent for quick Q&A
+# Usage: cask <file> "explain this function"
+cask() {
+  [[ -z "$1" || -z "$2" ]] && { echo "Usage: cask <file> <prompt>"; return 1 }
+  cat "$1" | cursor agent --print --mode=ask "$2"
 }
 
 # Get DB vars from pass
