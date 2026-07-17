@@ -1,0 +1,42 @@
+return {
+  "pmizio/typescript-tools.nvim",
+  dependencies = { "nvim-lua/plenary.nvim", "neovim/nvim-lspconfig" },
+  ft = { "javascript", "javascriptreact", "typescript", "typescriptreact" },
+  opts = {
+    settings = {
+      separate_diagnostic_server = true,
+      publish_diagnostic_on = "insert_leave",
+      expose_as_code_action = { "fix_all", "add_missing_imports", "remove_unused", "remove_unused_imports", "organize_imports" },
+      tsserver_max_memory = "auto",
+      tsserver_file_preferences = {
+        includeInlayParameterNameHints = "all",
+        includeInlayParameterNameHintsWhenArgumentMatchesName = false,
+        includeInlayFunctionParameterTypeHints = true,
+        includeInlayVariableTypeHints = true,
+        includeInlayVariableTypeHintsWhenTypeMatchesName = false,
+        includeInlayPropertyDeclarationTypeHints = true,
+        includeInlayFunctionLikeReturnTypeHints = true,
+        includeInlayEnumMemberValueHints = true,
+        includeCompletionsForModuleExports = true,
+        quotePreference = "auto",
+      },
+      tsserver_format_options = {
+        allowIncompleteCompletions = false,
+        allowRenameOfImportPath = false,
+      },
+      complete_function_calls = true,
+      include_completions_with_insert_text = true,
+      code_lens = "off",
+      disable_member_code_lens = true,
+      jsx_close_tag = { enable = false, filetypes = { "javascriptreact", "typescriptreact" } },
+    },
+  },
+  keys = {
+    { "<leader>to", "<cmd>TSToolsOrganizeImports<cr>", desc = "TS: Organize imports" },
+    { "<leader>ta", "<cmd>TSToolsAddMissingImports<cr>", desc = "TS: Add missing imports" },
+    { "<leader>tu", "<cmd>TSToolsRemoveUnusedImports<cr>", desc = "TS: Remove unused imports" },
+    { "<leader>tf", "<cmd>TSToolsFixAll<cr>", desc = "TS: Fix all" },
+    { "<leader>tr", "<cmd>TSToolsRenameFile<cr>", desc = "TS: Rename file" },
+    { "<leader>tR", "<cmd>TSToolsFileReferences<cr>", desc = "TS: File references" },
+  },
+}
