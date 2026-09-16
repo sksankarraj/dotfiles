@@ -42,7 +42,37 @@ km.set('n', '<leader><ESC>', ':noh<CR>', { noremap = true, silent = true })
 km.set('n', '<leader>V', ':vsplit<CR>', { noremap = true, silent = true })
 km.set('n', '<leader>C', ':split<CR>', { noremap = true, silent = true })
 km.set('n', '<leader>D', ':bd<CR>', { noremap = true, silent = true })
+km.set('n', '<leader>cb', function()
+  vim.cmd('%bd | enew')
+end, { noremap = true, silent = true, desc = 'Close all buffers' })
 km.set('n', '<leader>sd', function() vim.diagnostic.open_float() end)
+
+
+-- Copy relative file path with line number (normal) or range (visual)
+km.set("n", "<leader>yl", function()
+  local path = vim.fn.expand("%")
+  local line = vim.fn.line(".")
+  local result = string.format("%s:%d", path, line)
+  vim.fn.setreg("+", result)
+  vim.notify("Copied: " .. result)
+end, { desc = "Copy file path with line number" })
+
+km.set("v", "<leader>yl", function()
+  local path = vim.fn.expand("%")
+  local start_line = vim.fn.line("v")
+  local end_line = vim.fn.line(".")
+  if start_line > end_line then
+    start_line, end_line = end_line, start_line
+  end
+  local result
+  if start_line == end_line then
+    result = string.format("%s:%d", path, start_line)
+  else
+    result = string.format("%s:%d-%d", path, start_line, end_line)
+  end
+  vim.fn.setreg("+", result)
+  vim.notify("Copied: " .. result)
+end, { desc = "Copy file path with line range" })
 
 
 vim.keymap.set("n", "<leader>r", function()

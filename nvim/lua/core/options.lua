@@ -36,33 +36,14 @@ opt.splitbelow = true
 
 opt.mouse = ""
 
-vim.api.nvim_create_autocmd('LspAttach', {
-  desc = 'Enable inlay hints when supported',
-  group = vim.api.nvim_create_augroup('lsp-inlay-hints', { clear = true }),
-  callback = function(args)
-    local client = vim.lsp.get_client_by_id(args.data.client_id)
-    if client and client:supports_method('textDocument/inlayHint') then
-      vim.lsp.inlay_hint.enable(true, { bufnr = args.buf })
-    end
-  end,
-})
+vim.api.nvim_create_user_command('InlayHintsToggle', function()
+  vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled({ bufnr = 0 }), { bufnr = 0 })
+end, { desc = 'Toggle LSP inlay hints for current buffer' })
 
 vim.api.nvim_create_autocmd('TextYankPost', {
   desc = 'Highlight when yanking (copying) text',
   group = vim.api.nvim_create_augroup('kickstart-highlight-yank', { clear = true }),
   callback = function()
     vim.highlight.on_yank()
-  end,
-})
-
--- Organize imports in TypeScript files on save (typescript-tools.nvim)
-vim.api.nvim_create_autocmd('BufWritePre', {
-  pattern = { '*.ts', '*.tsx' },
-  callback = function()
-    local ok, api = pcall(require, 'typescript-tools.api')
-    if ok then
-      api.organize_imports(true)
-      api.add_missing_imports(true)
-    end
   end,
 })

@@ -7,25 +7,6 @@
 # source ~/.zsh_functions
 
 
-declare -A envs
-
-envs=(
-  [sb]="sb,0"
-  [sb-01]="sb-01,5433"
-  [sb-02]="sb-02,5434"
-  [sb-03]="sb-03,5435"
-  [sb-04]="sb-04,5436"
-  [sb-05]="sb-05,5437"
-  [sb-06]="sb-06,5438"
-  [sb-07]="sb-07,5439"
-  [sb-08]="sb-08,5440"
-  [sb-09]="sb-09,5441"
-  [stg]="staging,5432"
-  [prod]="production,5432"
-  [im_stg]="instance,5532"
-  [im_sb]="instance,5534"
-)
-
 
 # This function will retrieve the secret from keychain
 #
@@ -35,79 +16,6 @@ get_pw() {
   security find-generic-password -ga "$1" -w
 }
 
-# This function will login to the kubernetes cluster using tsh
-#
-# Usage:
-# login-tsh <env>
-login-tsh() {
-  if [ -z "${envs[$1]}" ]; then
-    echo "Invalid environment"
-    return 1
-  fi
-
-  local env=$(echo "${envs[$1]}" | cut -d "," -f 1)
-  if tsh kube ls | grep "*" | grep -q "flow-${env}-eks-cluster"; then
-    echo "Already logged in to flow-${env}-eks-cluster"
-  else
-    tsh kube login flow-${env}-eks-cluster
-  fi
-}
-
-
-# This function will ssh into kube server using kubectl
-#
-# Usage:
-# kex <namespace> <env>
-kex() {
-  if [ -z "$1" ] || [ -z "$2" ]; then
-    echo "Usage: kex <namespace> <env>"
-    return 1
-  fi
-
-  login-tsh $2
-  
-  # Check if the pod is running, if not print error
-  local ns=$1
-  if [ "$2" = "sb" ]; then
-    ns="sb-$1"
-  fi
-  local env=$(echo "${envs[$2]}" | cut -d "," -f 1)
-  local pod=$(kubectl get pods -n $ns --selector=app.kubernetes.io/name=$1-${env} --field-selector=status.phase==Running -o jsonpath="{.items[0].metadata.name}" 2>/dev/null)
-  if [ -z "$pod" ]; then
-    echo "\033[0;31mError:\033[0m No running pods found for $1 in $env"
-    return 1
-  fi
-
-  kubectl exec -it -n $ns $pod -- /bin/bash
-}
-
-
-# This function will get logs from kube server using kubectl
-#
-# Usage:
-# klogs <namespace> <env>
-klogs() {
-  if [ -z "$1" ] || [ -z "$2" ]; then
-    echo "Usage: klogs <namespace> <env>"
-    return 1
-  fi
-
-  login-tsh $2
-  
-  # Check if the pod is running, if not print error
-  local ns=$1
-  if [ "$2" = "sb" ]; then
-    ns="sb-$1"
-  fi
-  local env=$(echo "${envs[$2]}" | cut -d "," -f 1)
-  local pod=$(kubectl get pods -n $ns --selector=app.kubernetes.io/name=$1-${env} --field-selector=status.phase==Running -o jsonpath="{.items[0].metadata.name}" 2>/dev/null)
-  if [ -z "$pod" ]; then
-    echo "\033[0;31mError:\033[0m No running pods found for $1 in $env"
-    return 1
-  fi
-
-  kubectl logs --tail 20 -f -n $ns $pod
-}
 # This function will cd via zoxide and open a tmux session, then vi into the directory
 
 # Usage:
@@ -189,32 +97,6 @@ kport() {
     fi
 }
 
-# This function will ssh into the jump box using tsh and then login to the DB instance using psql
-#
-# Usage:
-#
-# db <env>
-
-db() {
-  if [ -z "$1" ]; then
-    echo "Usage: db <env>"
-    return 1
-  fi
-
-  local db_url=$(pass db/${1})
-  local env=$(echo ${envs[$1]} | cut -d "," -f 1)
-  local db_port=$(echo ${envs[$1]} | cut -d "," -f 2)
-  
-  echo "Connecting to ${env} database..."
-
-
-  # Ensure the port is free
-  echo "Checking if port ${db_port} is free, if not killing the process using it..."
-  kport ${db_port} > /dev/null 2>&1
-
-  pgcli ${db_url}
-}
-
 # This function is decode jWT tokens in terminal and print the output in a readable format
 #
 # Usage:
@@ -278,10 +160,6 @@ ghprs() {
 }
 
 
-whoison() {
-  lsof -nP -iTCP:$1 -sTCP:LISTEN;
-}
-
 # Open a tmux session with cursor agent in the workspace
 # Uses zoxide for directory resolution, same as opin
 copin() {
@@ -323,47 +201,15 @@ cask() {
   cat "$1" | cursor agent --print --mode=ask "$2"
 }
 
-# Get DB vars from pass
-generate_db_env() {
-  DATABASE_URL="$(pass db/stg)"
-
-  url_no_proto="${DATABASE_URL#postgresql://}"
-
-  user_pass="${url_no_proto%@*}"
-  DB_USER="${user_pass%%:*}"
-  DB_PASSWORD="${user_pass#*:}"
-
-  host_port_db="${url_no_proto#*@}"
-
-  host_port="${host_port_db%%/*}"
-  DB_HOST="${host_port%%:*}"
-  DB_PORT="${host_port#*:}"
-
-  db_with_params="${host_port_db#*/}"
-  DB_NAME="${db_with_params%%\?*}"
+fsc() {
+    local target
+    # Sorts local branches by recent commit, fuzzy matches your argument, takes the top result
+    target=$(git branch --sort=-committerdate --format='%(refname:short)' | grep -i "$1" | head -n 1)
+    
+    if [ -n "$target" ]; then
+        git checkout "$target"
+    else
+        echo "No matching branch found for '$1'"
+    fi
 }
 
-# Load DB vars into cache file and source it.
-load_db_env() {
-  DB_ENV_CACHE="$HOME/.db_env_cache"
-  if [ -f "$DB_ENV_CACHE" ]; then
-    source "$DB_ENV_CACHE"
-  else
-    echo "Generating DB env..."
-
-    generate_db_env
-
-    cat > "$DB_ENV_CACHE" <<EOF
-export COMPOSE_BAKE=true
-export DB_USER="$DB_USER"
-export DB_PASSWORD="$DB_PASSWORD"
-export DB_HOST="$DB_HOST"
-export DB_PORT="$DB_PORT"
-export DB_NAME="$DB_NAME"
-EOF
-
-    source "$DB_ENV_CACHE"
-  fi
-}
-
-load_db_env

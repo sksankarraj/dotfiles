@@ -4,6 +4,7 @@ alias pip=pip3
 alias cd="z"
 
 alias lg='lazygit'
+alias lzd='lazydocker'
 
 alias c=clear
 alias update="brew update"
@@ -61,3 +62,5 @@ alias caa='cursor agent --mode=ask'
 alias car='cursor agent --resume'
 alias cac='cursor agent --continue'
 alias cas='cursor agent status'
+
+alias dcbu='devcontainer build && devcontainer up'
